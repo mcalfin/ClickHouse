@@ -1070,7 +1070,7 @@ bool InterpreterSelectQuery::adjustParallelReplicasAfterAnalysis()
     ASTSelectQuery & query = getSelectQuery();
 
     /// While only_analyze we don't know anything about parts, so any decision about how many parallel replicas to use would be wrong
-    if (!storage || options.only_analyze || !context->canUseParallelReplicasOnInitiator())
+    if (!storage || options.only_analyze || !context->canUseParallelReplicasOnInitiator(options.is_part_of_insert_select))
         return false;
 
     if (getTrivialCount(0).has_value())
@@ -1197,6 +1197,7 @@ Block InterpreterSelectQuery::getSampleBlockImpl()
     /// NOTE: this is required only for IStorage::read(), and to be precise MergeTreeData::read(), in case of projections.
     query_info.has_order_by = select_query.orderBy() != nullptr;
     query_info.need_aggregate = query_analyzer->hasAggregation();
+    query_info.is_part_of_insert_select = options.is_part_of_insert_select;
 
     if (storage && !options.only_analyze)
     {

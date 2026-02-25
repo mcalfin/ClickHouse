@@ -189,6 +189,8 @@ struct SelectQueryInfo
     bool has_order_by = false;
     bool need_aggregate = false;
 
+    bool is_part_of_insert_select = false;
+
     /// Actions for row level security filter. Applied separately before prewhere.
     /// This actions are separate because prewhere condition should not be executed over filtered rows.
     FilterDAGInfoPtr row_level_filter;

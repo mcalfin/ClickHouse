@@ -7294,7 +7294,7 @@ std::shared_ptr<AsyncReadCounters> Context::getAsyncReadCounters() const
     return async_read_counters;
 }
 
-bool Context::canUseTaskBasedParallelReplicas() const
+bool Context::canUseTaskBasedParallelReplicas(bool is_part_of_insert_select) const
 {
     const auto & settings_ref = getSettingsRef();
 
@@ -7304,17 +7304,17 @@ bool Context::canUseTaskBasedParallelReplicas() const
     return settings_ref[Setting::allow_experimental_parallel_reading_from_replicas] > 0
         && settings_ref[Setting::parallel_replicas_mode] == ParallelReplicasMode::READ_TASKS
         && settings_ref[Setting::max_parallel_replicas] > 1
-        && settings_ref[Setting::automatic_parallel_replicas_mode] == 0;
+        && (settings_ref[Setting::automatic_parallel_replicas_mode] == 0 || is_part_of_insert_select);
 }
 
-bool Context::canUseParallelReplicasOnInitiator() const
+bool Context::canUseParallelReplicasOnInitiator(bool is_part_of_insert_select) const
 {
-    return canUseTaskBasedParallelReplicas() && !getClientInfo().collaborate_with_initiator;
+    return canUseTaskBasedParallelReplicas(is_part_of_insert_select) && !getClientInfo().collaborate_with_initiator;
 }
 
-bool Context::canUseParallelReplicasOnFollower() const
+bool Context::canUseParallelReplicasOnFollower(bool is_part_of_insert_select) const
 {
-    return canUseTaskBasedParallelReplicas() && getClientInfo().collaborate_with_initiator;
+    return canUseTaskBasedParallelReplicas(is_part_of_insert_select) && getClientInfo().collaborate_with_initiator;
 }
 
 bool Context::canUseParallelReplicasCustomKey() const

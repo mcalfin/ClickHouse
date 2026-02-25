@@ -335,11 +335,11 @@ const QueryNode * findQueryForParallelReplicas(const QueryTreeNodePtr & query_tr
 
     auto context = query_node ? query_node->getContext() : union_node->getContext();
 
-    if (!context->canUseParallelReplicasOnInitiator())
+    if (!context->canUseParallelReplicasOnInitiator(select_query_options.is_part_of_insert_select))
         return nullptr;
 
     const auto & settings_ref = context->getSettingsRef();
-    if (settings_ref[Setting::automatic_parallel_replicas_mode] != 0)
+    if (settings_ref[Setting::automatic_parallel_replicas_mode] != 0 && !select_query_options.is_part_of_insert_select)
         return nullptr;
 
     auto stack = getSupportingParallelReplicasQueries(query_tree_node.get(), context);
@@ -496,11 +496,12 @@ const TableNode * findTableForParallelReplicas(const QueryTreeNodePtr & query_tr
 
     auto context = query_node ? query_node->getContext() : union_node->getContext();
 
-    if (!context->getSettingsRef()[Setting::serialize_query_plan] && !context->canUseParallelReplicasOnFollower())
+    if (!context->getSettingsRef()[Setting::serialize_query_plan]
+        && !context->canUseParallelReplicasOnFollower(select_query_options.is_part_of_insert_select))
         return nullptr;
 
     const auto & settings_ref = context->getSettingsRef();
-    if (settings_ref[Setting::automatic_parallel_replicas_mode] != 0)
+    if (settings_ref[Setting::automatic_parallel_replicas_mode] != 0 && !select_query_options.is_part_of_insert_select)
         return nullptr;
 
     return findTableForParallelReplicas(query_tree_node.get(), context);

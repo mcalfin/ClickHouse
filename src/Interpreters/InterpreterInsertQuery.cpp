@@ -367,7 +367,7 @@ QueryPipeline InterpreterInsertQuery::addInsertToSelectPipeline(ASTInsertQuery &
     // disable parallel replicas for inserts if enabled
     // the insert can trigger update for dependent materialized views
     // using parallel replicas in this context is unnecessary
-    if (context->canUseParallelReplicasOnInitiator())
+    if (context->canUseParallelReplicasOnInitiator(/*is_part_of_insert_select=*/true))
     {
         auto mutable_context = Context::createCopy(context);
         mutable_context->setSetting("enable_parallel_replicas", Field{0});
@@ -660,7 +660,7 @@ std::optional<QueryPipeline> InterpreterInsertQuery::buildInsertSelectPipelinePa
     if (!settings[Setting::allow_experimental_analyzer])
         return {};
 
-    if (!context_ptr->canUseParallelReplicasOnInitiator())
+    if (!context_ptr->canUseParallelReplicasOnInitiator(/*is_part_of_insert_select=*/true))
         return {};
 
     if (settings[Setting::parallel_distributed_insert_select] != 2)
@@ -696,7 +696,7 @@ QueryPipeline InterpreterInsertQuery::buildInsertPipeline(ASTInsertQuery & query
     // disable parallel replicas for inserts if enabled
     // the insert can trigger update for dependent materialized views
     // using parallel replicas in this context is unnecessary
-    if (context->canUseParallelReplicasOnInitiator())
+    if (context->canUseParallelReplicasOnInitiator(/*is_part_of_insert_select=*/true))
     {
         auto mutable_context = Context::createCopy(context);
         mutable_context->setSetting("enable_parallel_replicas", Field{0});
@@ -937,7 +937,7 @@ BlockIO InterpreterInsertQuery::execute()
                 if (auto pipeline = distributedWriteIntoReplicatedMergeTreeOrDataLakeFromClusterStorage(query, context); pipeline)
                     res.pipeline = std::move(*pipeline);
             }
-            if (!res.pipeline.initialized() && context->canUseParallelReplicasOnInitiator())
+            if (!res.pipeline.initialized() && context->canUseParallelReplicasOnInitiator(/*is_part_of_insert_select=*/true))
             {
                 auto pipeline = buildInsertSelectPipelineParallelReplicas(query, table);
                 if (pipeline)

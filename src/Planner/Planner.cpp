@@ -1752,6 +1752,7 @@ void Planner::buildPlanForQueryNode()
     select_query_info.has_aggregates = hasAggregateFunctionNodes(query_tree);
     select_query_info.need_aggregate = query_node.hasGroupBy() || select_query_info.has_aggregates;
     select_query_info.merge_tree_enable_remove_parts_from_snapshot_optimization = select_query_options.merge_tree_enable_remove_parts_from_snapshot_optimization;
+    select_query_info.is_part_of_insert_select = select_query_options.is_part_of_insert_select;
 
     if (!select_query_info.has_window && query_node.hasQualify())
     {
@@ -1860,7 +1861,7 @@ void Planner::buildPlanForQueryNode()
     }
 
     JoinTreeQueryPlan join_tree_query_plan;
-    if (planner_context->getMutableQueryContext()->canUseTaskBasedParallelReplicas()
+    if (planner_context->getMutableQueryContext()->canUseTaskBasedParallelReplicas(select_query_options.is_part_of_insert_select)
         && planner_context->getGlobalPlannerContext()->parallel_replicas_node == &query_node)
     {
         join_tree_query_plan = buildQueryPlanForParallelReplicas(query_node, planner_context, select_query_info.storage_limits);

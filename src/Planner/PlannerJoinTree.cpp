@@ -1099,7 +1099,7 @@ JoinTreeQueryPlan buildQueryPlanForTableExpression(QueryTreeNodePtr table_expres
                     /// If we have a non-trivial storage like View it might create its own Planner inside read(), run findTableForParallelReplicas()
                     /// and find some other table that might be used for reading with parallel replicas. It will lead to errors.
                     const bool no_tables_or_another_table_chosen_for_reading_with_parallel_replicas_mode
-                        = query_context->canUseParallelReplicasOnFollower()
+                        = query_context->canUseParallelReplicasOnFollower(select_query_options.is_part_of_insert_select)
                         && table_node != planner_context->getGlobalPlannerContext()->parallel_replicas_table;
                     if (no_tables_or_another_table_chosen_for_reading_with_parallel_replicas_mode)
                     {
@@ -1247,7 +1247,7 @@ JoinTreeQueryPlan buildQueryPlanForTableExpression(QueryTreeNodePtr table_expres
                         }
                     }
                     else if (
-                        ClusterProxy::canUseParallelReplicasOnInitiator(query_context)
+                        ClusterProxy::canUseParallelReplicasOnInitiator(query_context, select_query_options.is_part_of_insert_select)
                         && allow_parallel_replicas_for_join_tree(parent_join_tree, settings))
                     {
                         // (1) find read step
@@ -1311,7 +1311,8 @@ JoinTreeQueryPlan buildQueryPlanForTableExpression(QueryTreeNodePtr table_expres
                         }
 
                         // (3) if parallel replicas still enabled - replace reading step
-                        if (planner_context->getQueryContext()->canUseParallelReplicasOnInitiator())
+                        if (planner_context->getQueryContext()->canUseParallelReplicasOnInitiator(
+                                select_query_options.is_part_of_insert_select))
                         {
                             till_stage = QueryProcessingStage::WithMergeableState;
                             QueryPlan query_plan_parallel_replicas;

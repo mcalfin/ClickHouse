@@ -300,8 +300,8 @@ void StorageMergeTree::read(
 {
     const auto & settings = local_context->getSettingsRef();
     /// reading step for parallel replicas with the analyzer is built in Planner, so don't do it here
-    if (local_context->canUseParallelReplicasOnInitiator() && settings[Setting::parallel_replicas_for_non_replicated_merge_tree]
-        && !settings[Setting::allow_experimental_analyzer])
+    if (local_context->canUseParallelReplicasOnInitiator(query_info.is_part_of_insert_select)
+        && settings[Setting::parallel_replicas_for_non_replicated_merge_tree] && !settings[Setting::allow_experimental_analyzer])
     {
         ClusterProxy::executeQueryWithParallelReplicas(
             query_plan, getStorageID(), processed_stage, query_info.query, local_context, query_info.storage_limits);
@@ -334,7 +334,7 @@ void StorageMergeTree::read(
             cluster->getName());
     }
 
-    const bool enable_parallel_reading = local_context->canUseParallelReplicasOnFollower()
+    const bool enable_parallel_reading = local_context->canUseParallelReplicasOnFollower(query_info.is_part_of_insert_select)
         && local_context->getSettingsRef()[Setting::parallel_replicas_for_non_replicated_merge_tree];
 
     auto plan = MergeTreeDataSelectExecutor(*this).read(

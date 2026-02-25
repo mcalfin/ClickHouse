@@ -68,7 +68,7 @@ AdditionalShardFilterGenerator
 getShardFilterGeneratorForCustomKey(const Cluster & cluster, ContextPtr context, const ColumnsDescription & columns);
 
 bool isSuitableForParallelReplicas(const ASTPtr & select, const ContextPtr & context);
-bool canUseParallelReplicasOnInitiator(const ContextPtr & context);
+bool canUseParallelReplicasOnInitiator(const ContextPtr & context, bool is_part_of_insert_select);
 ParallelReplicasReadingCoordinatorPtr dropReadFromRemoteInPlan(QueryPlan & query_plan);
 
 /// Execute a distributed query, creating a query plan, from which the query pipeline can be built.

@@ -910,9 +910,9 @@ void executeQueryWithParallelReplicasCustomKey(
     executeQueryWithParallelReplicasCustomKey(query_plan, storage_id, query_info, columns, snapshot, processed_stage, header, context);
 }
 
-bool canUseParallelReplicasOnInitiator(const ContextPtr & context)
+bool canUseParallelReplicasOnInitiator(const ContextPtr & context, bool is_part_of_insert_select)
 {
-    if (!context->canUseParallelReplicasOnInitiator())
+    if (!context->canUseParallelReplicasOnInitiator(is_part_of_insert_select))
         return false;
 
     auto cluster = context->getClusterForParallelReplicas();
