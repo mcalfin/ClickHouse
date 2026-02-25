@@ -6023,7 +6023,8 @@ void StorageReplicatedMergeTree::read(
         return;
     }
     /// reading step for parallel replicas with the analyzer is built in Planner, so don't do it here
-    if (local_context->canUseParallelReplicasOnInitiator() && !settings[Setting::allow_experimental_analyzer])
+    if (local_context->canUseParallelReplicasOnInitiator(query_info.is_part_of_insert_select)
+        && !settings[Setting::allow_experimental_analyzer])
     {
         readParallelReplicasImpl(query_plan, column_names, query_info, local_context, processed_stage);
         return;

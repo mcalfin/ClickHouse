@@ -79,7 +79,6 @@ public:
         const Scalars & scalars_ = Scalars(),
         const Tables & external_tables_ = Tables(),
         QueryProcessingStage::Enum stage_ = QueryProcessingStage::Complete,
-
         std::optional<Extension> extension_ = std::nullopt);
 
     /// Accepts several connections already taken from pool.

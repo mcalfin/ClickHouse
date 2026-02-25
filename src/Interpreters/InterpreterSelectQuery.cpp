@@ -2992,7 +2992,8 @@ void InterpreterSelectQuery::executeMergeAggregated(QueryPlan & query_plan, bool
 
     const bool should_produce_results_in_order_of_bucket_number = options.to_stage == QueryProcessingStage::WithMergeableState
         && (settings[Setting::distributed_aggregation_memory_efficient] || settings[Setting::enable_memory_bound_merging_of_aggregation_results]);
-    const bool parallel_replicas_from_merge_tree = storage->isMergeTree() && context->canUseParallelReplicasOnInitiator();
+    const bool parallel_replicas_from_merge_tree
+        = storage->isMergeTree() && context->canUseParallelReplicasOnInitiator(options.is_part_of_insert_select);
 
     executeMergeAggregatedImpl(
         query_plan,

@@ -1,6 +1,7 @@
 #include <memory>
 #include <DataTypes/DataTypesNumber.h>
 #include <DataTypes/IDataType.h>
+#include <Interpreters/SelectQueryOptions.h>
 #include <Interpreters/convertFieldToType.h>
 #include <Planner/Planner.h>
 
@@ -214,13 +215,17 @@ void checkStoragesSupportTransactions(const PlannerContextPtr & planner_context)
   * 4. Extract filters from ReadFromDummy query plan steps from query plan leaf nodes.
   */
 
-FiltersForTableExpressionMap collectFiltersForAnalysis(const QueryTreeNodePtr & query_tree, const QueryTreeNodes & table_nodes, const ContextPtr & query_context)
+FiltersForTableExpressionMap collectFiltersForAnalysis(
+    const QueryTreeNodePtr & query_tree,
+    const QueryTreeNodes & table_nodes,
+    const ContextPtr & query_context,
+    bool is_part_of_insert_select)
 {
     bool collect_filters = false;
     const auto & settings = query_context->getSettingsRef();
 
-    bool parallel_replicas_estimation_enabled
-        = query_context->canUseParallelReplicasOnInitiator() && settings[Setting::parallel_replicas_min_number_of_rows_per_replica] > 0;
+    bool parallel_replicas_estimation_enabled = query_context->canUseParallelReplicasOnInitiator(is_part_of_insert_select)
+        && settings[Setting::parallel_replicas_min_number_of_rows_per_replica] > 0;
 
     for (const auto & table_expression : table_nodes)
     {
@@ -326,7 +331,7 @@ FiltersForTableExpressionMap collectFiltersForAnalysis(const QueryTreeNodePtr & 
     auto table_expressions_nodes
         = extractTableExpressions(query_tree_node, false /* add_array_join */, true /* recursive */);
 
-    return collectFiltersForAnalysis(query_tree_node, table_expressions_nodes, context);
+    return collectFiltersForAnalysis(query_tree_node, table_expressions_nodes, context, select_query_options.is_part_of_insert_select);
 }
 
 /// Extend lifetime of query context, storages, and table locks
@@ -667,10 +672,12 @@ void addAggregationStep(QueryPlan & query_plan,
     query_plan.addStep(std::move(aggregating_step));
 }
 
-void addMergingAggregatedStep(QueryPlan & query_plan,
+void addMergingAggregatedStep(
+    QueryPlan & query_plan,
     const AggregationAnalysisResult & aggregation_analysis_result,
     const QueryAnalysisResult & query_analysis_result,
-    const PlannerContextPtr & planner_context)
+    const PlannerContextPtr & planner_context,
+    const SelectQueryOptions & select_query_options)
 {
     const auto & query_context = planner_context->getQueryContext();
     const auto & settings = query_context->getSettingsRef();
@@ -717,7 +724,8 @@ void addMergingAggregatedStep(QueryPlan & query_plan,
     {
         auto it = table_expression_node_to_data.begin();
         is_remote_storage = it->second.isRemote();
-        parallel_replicas_from_merge_tree = it->second.isMergeTree() && query_context->canUseParallelReplicasOnInitiator();
+        parallel_replicas_from_merge_tree
+            = it->second.isMergeTree() && query_context->canUseParallelReplicasOnInitiator(select_query_options.is_part_of_insert_select);
     }
 
     auto merging_aggregated = std::make_unique<MergingAggregatedStep>(
@@ -1925,7 +1933,7 @@ void Planner::buildPlanForQueryNode()
         if (expression_analysis_result.hasAggregation())
         {
             const auto & aggregation_analysis_result = expression_analysis_result.getAggregation();
-            addMergingAggregatedStep(query_plan, aggregation_analysis_result, query_analysis_result, planner_context);
+            addMergingAggregatedStep(query_plan, aggregation_analysis_result, query_analysis_result, planner_context, select_query_options);
         }
     }
 
@@ -2038,7 +2046,8 @@ void Planner::buildPlanForQueryNode()
 
             if (!query_processing_info.isFirstStage())
             {
-                addMergingAggregatedStep(query_plan, aggregation_analysis_result, query_analysis_result, planner_context);
+                addMergingAggregatedStep(
+                    query_plan, aggregation_analysis_result, query_analysis_result, planner_context, select_query_options);
             }
 
             bool having_executed = false;

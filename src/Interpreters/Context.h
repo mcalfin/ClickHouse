@@ -1710,7 +1710,7 @@ public:
     /** There are multiple conditions that have to be met to be able to use parallel replicas */
     bool canUseTaskBasedParallelReplicas(bool is_part_of_insert_select = false) const;
     bool canUseParallelReplicasOnInitiator(bool is_part_of_insert_select = false) const;
-    bool canUseParallelReplicasOnFollower(bool is_part_of_insert_select = false) const;
+    bool canUseParallelReplicasOnFollower(bool is_part_of_insert_select) const;
     bool canUseParallelReplicasCustomKey() const;
     bool canUseParallelReplicasCustomKeyForCluster(const Cluster & cluster) const;
     bool canUseOffsetParallelReplicas() const;

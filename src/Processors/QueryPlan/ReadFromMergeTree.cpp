@@ -2654,7 +2654,7 @@ void ReadFromMergeTree::updateSortDescription()
 bool ReadFromMergeTree::isParallelReplicasLocalPlanForInitiator() const
 {
     return is_parallel_reading_from_replicas && context->getSettingsRef()[Setting::parallel_replicas_local_plan]
-        && context->canUseParallelReplicasOnInitiator();
+        && context->canUseParallelReplicasOnInitiator(query_info.is_part_of_insert_select);
 }
 
 bool ReadFromMergeTree::requestReadingInOrder(size_t prefix_size, int direction, size_t read_limit)
