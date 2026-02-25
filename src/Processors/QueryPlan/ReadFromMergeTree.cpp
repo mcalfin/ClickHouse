@@ -2369,7 +2369,7 @@ ReadFromMergeTree::AnalysisResultPtr ReadFromMergeTree::selectRangesToRead(
         .result = result,
     };
 
-    if (context_->canUseParallelReplicasOnFollower() && settings[Setting::parallel_replicas_local_plan]
+    if (context_->canUseParallelReplicasOnFollower(query_info_.is_part_of_insert_select) && settings[Setting::parallel_replicas_local_plan]
         && settings[Setting::parallel_replicas_index_analysis_only_on_coordinator]
         /// If parallel replicas support projection optimization, selected_marks will be used to determine the optimal projection.
         && !support_projection_optimization)

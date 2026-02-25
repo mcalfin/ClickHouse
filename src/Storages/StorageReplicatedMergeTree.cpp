@@ -6113,7 +6113,7 @@ void StorageReplicatedMergeTree::readLocalImpl(
     const size_t max_block_size,
     const size_t num_streams)
 {
-    const bool enable_parallel_reading = local_context->canUseParallelReplicasOnFollower();
+    const bool enable_parallel_reading = local_context->canUseParallelReplicasOnFollower(query_info.is_part_of_insert_select);
     auto plan = MergeTreeDataSelectExecutor(*this).read(
         column_names,
         storage_snapshot,
